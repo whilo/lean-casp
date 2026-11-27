@@ -1,0 +1,23 @@
+name = "lean-casp"
+version = "0.1.0"
+defaultTargets = ["Casp"]
+testDriver = "CaspTests"
+
+[[lean_lib]]
+name = "Casp"
+
+[[lean_lib]]
+name = "CaspTests"
+roots = ["CaspTests", "FirstOrderTests", "TheoryTests", "Examples.Dispatch"]
+
+[[lean_exe]]
+name = "caspBench"
+root = "Bench"
+
+[[lean_exe]]
+name = "caspCompare"
+root = "Compare"
+
+[[lean_exe]]
+name = "caspTheoryBench"
+root = "TheoryBench"
