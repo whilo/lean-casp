@@ -2,6 +2,48 @@
 
 Lean CASP is a runnable experiment in extending answer set programs with logic written in Lean. An application can give a predicate a decidable meaning in Lean, declare which combinations of atoms are admissible, and use proved properties of that declaration to prune search. The demo implements finite-domain, function-free normal programs with default negation, integrity constraints, and guards over one integer parameter.
 
+## Write a logic program inside Lean
+
+`fo!{…}` embeds rules directly in a Lean file. `ask!{…}` embeds a query. Both expand to typed Lean data, so a program can be a function argument, can be assembled with `++`, and can appear in a theorem.
+
+```lean
+import Casp
+open Casp.FO
+
+def topology := fo!{
+  needs(api,worker); needs(worker,db); needs(api,cache);
+  prerequisite(S,D) :- needs(S,D);
+  prerequisite(S,D) :- needs(S,M), prerequisite(M,D)
+}
+
+def health := fo!{
+  service(api); service(worker); service(db); service(cache);
+  blocked(S) :- incident(S);
+  blocked(S) :- prerequisite(S,D), incident(D);
+  ready(S) :- service(S), not blocked(S)
+}
+
+def outage := topology ++ health ++ fo!{incident(db)}
+
+#eval (search [] outage 0 ask!{ready(S)}).1
+-- [[("S", "cache")]]
+```
+
+The API has no direct dependency on the database. The recursive rule still finds a path through the worker. Adding one incident therefore withdraws three earlier readiness conclusions. The [full rollout case study](docs/rollout.md) follows the same program through two competing release modes, a freeze, the actual size of the query slice, and a kernel-checked witness. The [syntax guide](docs/syntax.md) shows exactly what each form expands to.
+
+## What the implementation can do
+
+| If you want to… | Run or inspect |
+| --- | --- |
+| Query recursive rules, join relations, negate a goal with local variables, and change the policy by adding clauses | [Rollout program](Examples/Rollout.lean) |
+| Compute all matching stable models of a ground program and prove the enumeration sound and complete | [Reference semantics and solver](Casp/Reference.lean) |
+| Find a first witness by searching from the query and checking independent components | [Ground search](Casp/Search.lean) and [finite-domain query planner](Casp/FirstOrder.lean) |
+| Compute all integer intervals satisfying a query and prove a result for infinitely many parameter values | [Deployment windows](Examples/Windows.lean) |
+| Give a predicate a decidable Lean meaning and prune search with a verified constraint | [Dispatch program and composition theorem](Examples/Dispatch.lean) |
+| Turn a successful source-level query into a Lean theorem with `by casp` | [Witness replay tactic](Casp/Tactic.lean) |
+
+The current scope is a finite-domain CASP research library. First-order variables range over names. Arithmetic guards share one integer parameter. SWI s(CASP) also supports structured terms, general residual constraints, and justification trees beyond the interfaces demonstrated here. The exhaustive solver has completeness proofs. General completeness of the optimized query path remains open. [Guarantees by interface](#what-lean-checks)
+
 ## Coming from Prolog?
 
 Given `person(ann).`, `person(bob).`, `blocked(ann).`, and the rule below, who is allowed?
@@ -28,6 +70,8 @@ git clone https://github.com/whilo/lean-casp.git
 cd lean-casp
 lake build
 lake env lean Examples/Dispatch.lean
+lake env lean Examples/Rollout.lean
+lake env lean Examples/Windows.lean
 lake test
 ```
 
