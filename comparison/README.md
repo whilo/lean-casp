@@ -1,7 +1,7 @@
 # Comparing Lean with both SWI engines
 
 The shared driver generates one source fixture for all engines. It checks 32
-whole-program brave verdicts and six open queries. For open queries SWI first
+whole-program brave verdicts and eleven open queries, including five that read the checked-in Prolog tutorial clauses. The archived results.csv predates the five tutorial queries. For open queries SWI first
 solves with free variables, then the harness projects each answer onto the
 finite Lean domain and compares the complete set of tuples. This preserves
 the distinction between one jointly possible binding and two individually

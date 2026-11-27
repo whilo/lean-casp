@@ -8,7 +8,7 @@ name = "Casp"
 
 [[lean_lib]]
 name = "CaspTests"
-roots = ["CaspTests", "FirstOrderTests", "TheoryTests", "Examples.Dispatch"]
+roots = ["CaspTests", "FirstOrderTests", "TheoryTests", "Examples.Dispatch", "Examples.Blocked"]
 
 [[lean_exe]]
 name = "caspBench"

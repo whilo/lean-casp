@@ -73,6 +73,20 @@ def corpus():
     open_case("open_impossible", fo, "p(X),q(X)")
     open_case("open_join", "edge(a,b);edge(b,c);path(X,Z) :- edge(X,Y),edge(Y,Z)", "path(X,Z)")
     open_case("open_repeated", "edge(a,b);edge(a,a);same(X) :- edge(X,X)", "same(X)")
+    # Read the actual tutorial clauses. These files use one plain rule per line.
+    examples = Path(__file__).resolve().parents[1] / "Examples" / "prolog"
+    def clauses(name):
+        return ";".join(line.strip().removesuffix(".") for line in
+                        (examples / name).read_text().splitlines() if line.strip())
+
+    blocked = clauses("blocked.pl")
+    dispatch = clauses("dispatch.pl")
+    ordered = dispatch + ";" + clauses("order.pl")
+    open_case("tutorial_allowed", blocked, "allowed(X)")
+    open_case("tutorial_unblocked", blocked, "not blocked(X)")
+    open_case("tutorial_reverse", dispatch, "reverse(X)")
+    open_case("tutorial_ordered_reverse", ordered, "reverse(X)")
+    open_case("tutorial_ordered_forward", ordered, "forward(X)")
     return cases
 
 

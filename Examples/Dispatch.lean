@@ -19,6 +19,18 @@ def dispatch := fo!{
 def order : Order.Declaration :=
   ⟨⟨"sameDrain", ["ui","store"]⟩, ⟨"dependsOn", ["ui","store"]⟩, ⟨"reverse", ["ui"]⟩⟩
 
+-- First run the Prolog version verbatim, including eligibility as a fact.
+def withFact := dispatch ++ fo!{eligible(ui)}
+def denial := fo!{ :- sameDrain(ui,store), dependsOn(ui,store), reverse(ui) }
+
+#eval (FO.search [] withFact 0 ask!{reverse(X)}).1
+#eval (FO.search [] (withFact ++ denial) 0 ask!{reverse(X)}).1
+#eval (FO.search [] (withFact ++ denial) 0 ask!{forward(X)}).1
+
+#guard (FO.search [] withFact 0 ask!{reverse(X)}).1 == [[("X","ui")]]
+#guard (FO.search [] (withFact ++ denial) 0 ask!{reverse(X)}).1.isEmpty
+#guard (FO.search [] (withFact ++ denial) 0 ask!{forward(X)}).1 == [[("X","ui")]]
+
 private def query (q : FO.Body) (ds : List Order.Declaration) :=
   Order.search eligible ["ui"] [] dispatch 0 q ds
 
@@ -26,6 +38,16 @@ private def query (q : FO.Body) (ds : List Order.Declaration) :=
 #eval query ask!{reverse(X)} []
 #eval query ask!{reverse(X)} [order]
 #eval query ask!{forward(X)} [order]
+
+-- For this snapshot the Lean extension gives the same substitutions as the clauses above.
+private def agrees (q : FO.Body) (ds : List Order.Declaration) (p : FO.Program) :=
+  match query q ds with
+  | .ok rows => rows == (FO.search [] p 0 q).1
+  | .error _ => false
+
+#guard agrees ask!{reverse(X)} [] withFact
+#guard agrees ask!{reverse(X)} [order] (withFact ++ denial)
+#guard agrees ask!{forward(X)} [order] (withFact ++ denial)
 
 example : Order.Answers eligible ["ui"] [] dispatch 0 ask!{forward(X)} [order] [("X","ui")] := by
   casp

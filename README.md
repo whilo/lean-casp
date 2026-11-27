@@ -2,6 +2,23 @@
 
 Lean CASP is a runnable experiment in extending answer set programs with logic written in Lean. An application can give a predicate a decidable meaning in Lean, declare which combinations of atoms are admissible, and use proved properties of that declaration to prune search. The demo implements finite-domain, function-free normal programs with default negation, integrity constraints, and guards over one integer parameter.
 
+## Coming from Prolog?
+
+Given `person(ann).`, `person(bob).`, `blocked(ann).`, and the rule below, who is allowed?
+
+```prolog
+allowed(X) :- person(X), not blocked(X).
+```
+
+SWI s(CASP) answers `allowed(X)` with `X = bob`. The equivalent Lean query
+`#eval (search [] policy 0 ask!{allowed(X)}).1` prints `[[("X", "bob")]]`,
+one substitution binding `X` to `bob`. Drop the `person(X)` guard and ask
+`not blocked(X)` directly, and the difference between a constrained variable
+and a finite-domain answer becomes visible.
+
+1. [Run the same clauses in SWI and Lean](docs/from-prolog.md). Start here for syntax, open queries, and how to read the answers.
+2. [Turn a denial into a proved propagator](docs/propagator.md). Start here if you already know how to express an integrity constraint and want to see what Lean adds.
+
 ## Run the dispatch example
 
 With the Lean toolchain manager `elan` installed, run the following commands. The repository pins Lean 4.36.0 and uses its standard library.
@@ -14,7 +31,7 @@ lake env lean Examples/Dispatch.lean
 lake test
 ```
 
-The example models a UI consumer that depends on a store. A Lean snapshot determines eligibility. Two default rules permit either dispatch order for an eligible consumer. A separate declaration says that a consumer in the same synchronous drain as its dependency cannot run first. The file evaluates three queries and then asks Lean to check the surviving witness and a general composition theorem. [Runnable example](Examples/Dispatch.lean)
+The example models a UI consumer that depends on a store. A Lean snapshot determines eligibility. Two default rules permit either dispatch order for an eligible consumer. A separate declaration says that a consumer in the same synchronous drain as its dependency cannot run first. The file evaluates three queries with facts and repeats them with a Lean predicate and then asks Lean to check the surviving witness and a general composition theorem. [Runnable example](Examples/Dispatch.lean)
 
 | Query | Enabled constraint | Substitutions |
 | --- | --- | --- |
@@ -49,7 +66,7 @@ To apply this pattern to another system, prove the bridge from the program's ato
 | Can an application obtain a theorem about a particular source answer? | `by casp` replays a witness against full source semantics. See the `Order.Answers` example. |
 | Can the optimized path miss an answer? | General completeness of optimized ground search and equivalence of first-order slicing to full grounding remain open. The tests compare complete model and substitution sets on finite corpora. |
 
-The SWI comparison covers the shared finite fragment. It compares 32 verdicts and six open-query binding sets against two pinned s(CASP) engines. The Lean extension tests use the project's independent exhaustive reference. [Regression tests](TheoryTests.lean) · [SWI comparison and reproduction instructions](comparison/README.md)
+The SWI comparison covers the shared finite fragment. It compares 32 verdicts and eleven open-query binding sets (six original fixtures and five tutorial queries) against two pinned s(CASP) engines. The Lean extension tests use the project's independent exhaustive reference. [Regression tests](TheoryTests.lean) · [SWI comparison and reproduction instructions](comparison/README.md)
 
 ## Reasoning about cost
 
